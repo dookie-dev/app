@@ -2,73 +2,73 @@ import { createServerClient, type CookieOptions } from '@supabase/ssr'
 import { NextResponse, type NextRequest } from 'next/server'
 
 export async function middleware(request: NextRequest) {
+    // 1. Create Base Response
     let response = NextResponse.next({
         request: {
             headers: request.headers,
         },
     })
 
-    const supabase = createServerClient(
-        process.env.NEXT_PUBLIC_SUPABASE_URL!,
-        process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-        {
-            cookies: {
-                get(name: string) {
-                    return request.cookies.get(name)?.value
-                },
-                set(name: string, value: string, options: CookieOptions) {
-                    request.cookies.set({
-                        name,
-                        value,
-                        ...options,
-                    })
-                    response = NextResponse.next({
-                        request: {
-                            headers: request.headers,
-                        },
-                    })
-                    response.cookies.set({
-                        name,
-                        value,
-                        ...options,
-                    })
-                },
-                remove(name: string, options: CookieOptions) {
-                    request.cookies.set({
-                        name,
-                        value: '',
-                        ...options,
-                    })
-                    response = NextResponse.next({
-                        request: {
-                            headers: request.headers,
-                        },
-                    })
-                    response.cookies.set({
-                        name,
-                        value: '',
-                        ...options,
-                    })
-                },
-            },
-        }
-    )
+    // 2. Prevent crash if Env is missing in Vercel
+    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
+    const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
 
-    const { data: { user } } = await supabase.auth.getUser()
-
-    // Protect Admin Routes
-    // Protect Admin Routes
-    if (request.nextUrl.pathname.startsWith('/admin')) {
-        if (!user) {
-            return NextResponse.redirect(new URL('/login', request.url))
-        }
+    if (!supabaseUrl || !supabaseKey) {
+        return response
     }
 
-    // Redirect login if already logged in
-    if (request.nextUrl.pathname.startsWith('/login')) {
-        if (user) {
-            return NextResponse.redirect(new URL('/admin/dashboard', request.url))
+    try {
+        const supabase = createServerClient(
+            supabaseUrl,
+            supabaseKey,
+            {
+                cookies: {
+                    get(name: string) {
+                        return request.cookies.get(name)?.value
+                    },
+                    set(name: string, value: string, options: CookieOptions) {
+                        request.cookies.set({ name, value, ...options })
+                        response = NextResponse.next({
+                            request: { headers: request.headers },
+                        })
+                        response.cookies.set({ name, value, ...options })
+                    },
+                    remove(name: string, options: CookieOptions) {
+                        request.cookies.set({ name, value: '', ...options })
+                        response = NextResponse.next({
+                            request: { headers: request.headers },
+                        })
+                        response.cookies.set({ name, value: '', ...options })
+                    },
+                },
+            }
+        )
+
+        // 3. Prevent Unhandled Exception from Network
+        const { data: { user } } = await supabase.auth.getUser()
+
+        const pathname = request.nextUrl.pathname
+
+        // Protect Admin Routes
+        if (pathname.startsWith('/admin')) {
+            if (!user) {
+                const url = request.nextUrl.clone()
+                url.pathname = '/login'
+                return NextResponse.redirect(url)
+            }
         }
+
+        // Redirect login if already logged in
+        if (pathname.startsWith('/login')) {
+            if (user) {
+                const url = request.nextUrl.clone()
+                url.pathname = '/admin/dashboard'
+                return NextResponse.redirect(url)
+            }
+        }
+
+    } catch (error) {
+        console.error("Middleware Error:", error)
     }
 
     return response
@@ -77,12 +77,9 @@ export async function middleware(request: NextRequest) {
 export const config = {
     matcher: [
         /*
-         * Match all request paths except for the ones starting with:
-         * - _next/static (static files)
-         * - _next/image (image optimization files)
-         * - favicon.ico (favicon file)
-         * Feel free to modify this pattern to include more paths.
+         * Run middleware only on routes that need it to reduce Edge load and crash surface
          */
-        '/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)',
+        '/admin/:path*',
+        '/login',
     ],
 }
