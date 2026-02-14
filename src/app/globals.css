@@ -1,0 +1,111 @@
+@import "tailwindcss";
+
+:root {
+  --background: #f5e5e1;
+  --foreground: #174143;
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+
+  /* Font families */
+  --font-playfair: var(--font-playfair);
+  --font-kanit: var(--font-kanit);
+  --font-sans: var(--font-kanit);
+
+  /* Wedding elegant color palette - New Theme */
+  --color-blush: #f5e5e1;
+  --color-peach: #f9b487;
+  --color-sage: #427a76;
+  --color-forest: #174143;
+
+  /* Keep pink aliases for compatibility */
+  --color-pink-50: #faf2f0;
+  --color-pink-100: #f5e5e1;
+  --color-pink-200: #f0d5cf;
+  --color-pink-300: #f9b487;
+  --color-pink-400: #e89a5f;
+  --color-pink-500: #427a76;
+  --color-pink-600: #174143;
+
+  --color-cream: #fefcfb;
+  --color-ivory: #fffff5;
+}
+
+body {
+  background: #f5e5e1;
+  color: #174143;
+  font-family: var(--font-kanit), "Kanit", sans-serif;
+}
+
+/* Utility classes for fonts */
+.font-playfair {
+  font-family: var(--font-playfair), Georgia, serif;
+}
+
+.font-kanit {
+  font-family: var(--font-kanit), "Kanit", sans-serif;
+}
+
+/* Wedding decorative elements */
+.wedding-border {
+  border: 1px solid #f9b487;
+  box-shadow:
+    0 0 0 4px #f5e5e1,
+    0 0 0 5px #f9b487;
+}
+
+.wedding-divider {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.wedding-divider::before,
+.wedding-divider::after {
+  content: "";
+  flex: 1;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, #427a76, transparent);
+}
+
+/* Elegant text shadow for headings */
+.wedding-text-shadow {
+  text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.05);
+}
+
+/* Animated gradient background */
+@keyframes gradientShift {
+  0% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+  100% {
+    background-position: 0% 50%;
+  }
+}
+
+@keyframes float {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-10px);
+  }
+}
+
+@keyframes sparkle {
+  0%,
+  100% {
+    opacity: 0;
+    transform: scale(0);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
